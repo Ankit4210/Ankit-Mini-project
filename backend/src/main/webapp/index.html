@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe & Smart City – Civic Issue Reporting System</title>
+  <meta name="description" content="Report civic issues like garbage, potholes, and broken streetlights with automatic GPS location and photo evidence. Track resolution with unique Tracking IDs.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ═══════ NAVBAR ═══════ -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="nav-brand" onclick="switchTab('home')">
+        <div class="nav-brand-icon"><i class="fa-solid fa-city"></i></div>
+        Smart City
+      </div>
+
+      <ul class="nav-links">
+        <li class="nav-link active" data-tab="home" onclick="switchTab('home')">
+          <i class="fa-solid fa-house"></i> Home
+        </li>
+        <li class="nav-link" data-tab="explore" onclick="switchTab('explore')">
+          <i class="fa-solid fa-compass"></i> Explore
+        </li>
+        <li class="nav-link" data-tab="map" onclick="switchTab('map')">
+          <i class="fa-solid fa-map-location-dot"></i> City Map
+        </li>
+        <li class="nav-link" data-tab="my-reports" onclick="switchTab('my-reports')">
+          <i class="fa-solid fa-folder-open"></i> My Reports
+        </li>
+        <li class="nav-link" data-tab="admin" onclick="switchTab('admin')">
+          <i class="fa-solid fa-shield-halved"></i> Admin
+        </li>
+        <li class="nav-link" data-tab="leaderboard" onclick="switchTab('leaderboard')">
+          <i class="fa-solid fa-trophy"></i> Leaderboard
+        </li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+        <button class="btn btn-teal btn-sm" onclick="openModal('modal-report')">
+          <i class="fa-solid fa-camera-retro"></i> Report Issue
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openModal('modal-auth')">
+          <i class="fa-solid fa-right-to-bracket"></i> Login
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════ MAIN CONTENT ═══════ -->
+  <main>
+
+    <!-- ──── TAB: HOME ──── -->
+    <section class="tab-panel active" id="tab-home">
+
+      <!-- Hero -->
+      <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container hero-content">
+          <div class="hero-grid">
+            <div>
+              <div class="hero-badge">
+                <i class="fa-solid fa-satellite-dish"></i> Civic Tech Platform
+              </div>
+              <h1>
+                Report. Track.<br>
+                <span>Get It Fixed.</span>
+              </h1>
+              <p class="hero-desc">
+                Snap a photo of any civic problem — garbage dumps, broken roads, dark streetlights, water leaks — and submit it with automatic GPS location. Get a unique Tracking ID and watch your city get better.
+              </p>
+              <div class="hero-cta">
+                <button class="btn btn-orange btn-lg" onclick="openModal('modal-report')">
+                  <i class="fa-solid fa-plus-circle"></i> Report Issue
+                </button>
+                <button class="btn btn-teal btn-lg" onclick="switchTab('map')">
+                  <i class="fa-solid fa-map-location-dot"></i> Live City Map
+                </button>
+                <button class="btn btn-outline btn-lg" style="border-color:rgba(255,255,255,0.25); color:#fff;" onclick="switchTab('explore')">
+                  <i class="fa-solid fa-compass"></i> Explore Issues
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Tracker -->
+            <div class="tracker-card">
+              <div style="display:flex;align-items:center;gap:0.5rem;color:var(--teal-500);font-size:0.8rem;font-weight:700;margin-bottom:0.5rem;">
+                <i class="fa-solid fa-magnifying-glass-location"></i> INSTANT COMPLAINT TRACKER
+              </div>
+              <h3>Check Resolution Status</h3>
+              <p>Enter your Tracking ID to see live stepper, before/after photos, and remarks.</p>
+              <form onsubmit="handleQuickTrack(event)">
+                <div class="track-input-row">
+                  <input type="text" class="track-input" id="quick-track-input" placeholder="e.g. SSC-2026-8812" required>
+                  <button type="submit" class="btn btn-teal"><i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+              </form>
+              <div class="track-demos">
+                <span>Try:</span>
+                <a href="#" onclick="fillTrack('SSC-2026-8812');return false;">SSC-2026-8812</a>
+                <a href="#" onclick="fillTrack('SSC-2026-9041');return false;">SSC-2026-9041</a>
+                <a href="#" onclick="fillTrack('SSC-2026-4190');return false;">SSC-2026-4190</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats Bar -->
+      <div class="container">
+        <div class="stats-bar">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--teal-100);color:var(--teal-500);"><i class="fa-solid fa-clipboard-list"></i></div>
+            <div><div class="stat-val" id="stat-total">247</div><div class="stat-label">Total Issues Reported</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--lime-100);color:var(--lime-500);"><i class="fa-solid fa-circle-check"></i></div>
+            <div><div class="stat-val" id="stat-resolved">189</div><div class="stat-label">Resolved with Proof</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--red-100);color:var(--red-500);"><i class="fa-solid fa-fire"></i></div>
+            <div><div class="stat-val" id="stat-hotspots">12</div><div class="stat-label">Active Hotspots</div></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--violet-100);color:var(--violet-500);"><i class="fa-solid fa-users"></i></div>
+            <div><div class="stat-val" id="stat-citizens">1,340</div><div class="stat-label">Active Citizens</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categories -->
+      <section class="categories-section">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <div class="section-tag"><i class="fa-solid fa-layer-group"></i> Civic Categories</div>
+              <h2 class="section-title">What Would You Like to Report?</h2>
+              <p class="section-subtitle">Select a category to filter issues or start a new report.</p>
+            </div>
+          </div>
+          <div class="cat-grid" id="cat-grid"></div>
+        </div>
+      </section>
+
+      <!-- Recent Issues Preview -->
+      <section class="feed-section">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <div class="section-tag"><i class="fa-solid fa-rss"></i> Community Feed</div>
+              <h2 class="section-title">Recent Reports from Citizens</h2>
+              <p class="section-subtitle">Upvote genuine issues to increase municipal priority.</p>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="switchTab('explore')">
+              <i class="fa-solid fa-arrow-right"></i> View All
+            </button>
+          </div>
+          <div class="issues-grid" id="home-issues-grid"></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ──── TAB: EXPLORE ──── -->
+    <section class="tab-panel" id="tab-explore">
+      <div class="container" style="padding-top:2rem;">
+        <div class="section-header">
+          <div>
+            <div class="section-tag"><i class="fa-solid fa-compass"></i> Explore Issues</div>
+            <h2 class="section-title">Community Issue Board</h2>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="search-input" placeholder="Search issues..." oninput="renderIssues()">
+          <select id="filter-category" onchange="renderIssues()"><option value="">All Categories</option></select>
+          <select id="filter-status" onchange="renderIssues()">
+            <option value="">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="RESOLVED">Resolved</option>
+          </select>
+          <select id="filter-ward" onchange="renderIssues()"><option value="">All Wards</option></select>
+        </div>
+        <div class="issues-grid" id="explore-issues-grid"></div>
+      </div>
+    </section>
+
+    <!-- ──── TAB: MAP ──── -->
+    <section class="tab-panel" id="tab-map">
+      <div class="container" style="padding-top:2rem;">
+        <div class="section-header">
+          <div>
+            <div class="section-tag"><i class="fa-solid fa-map-location-dot"></i> GIS View</div>
+            <h2 class="section-title">Live Interactive City Map</h2>
+            <p class="section-subtitle">Color-coded pins showing all civic issues across the city.</p>
+          </div>
+        </div>
+        <div class="map-container" id="city-map"></div>
+      </div>
+    </section>
+
+    <!-- ──── TAB: MY REPORTS ──── -->
+    <section class="tab-panel" id="tab-my-reports">
+      <div class="container" style="padding-top:2rem;">
+        <div class="section-header">
+          <div>
+            <div class="section-tag"><i class="fa-solid fa-folder-open"></i> Dashboard</div>
+            <h2 class="section-title">My Reported Issues</h2>
+          </div>
+        </div>
+        <div class="reports-table-wrap">
+          <table class="reports-table">
+            <thead>
+              <tr>
+                <th>Tracking ID</th><th>Category</th><th>Ward</th><th>Status</th><th>Date</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="my-reports-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──── TAB: ADMIN ──── -->
+    <section class="tab-panel" id="tab-admin">
+      <div class="container" style="padding-top:2rem;">
+        <div class="section-header">
+          <div>
+            <div class="section-tag"><i class="fa-solid fa-shield-halved"></i> Municipal Console</div>
+            <h2 class="section-title">Admin Dashboard</h2>
+          </div>
+        </div>
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi">
+            <div class="admin-kpi-val" style="color:var(--orange-500);">14</div>
+            <div class="admin-kpi-label">Pending Triage</div>
+          </div>
+          <div class="admin-kpi">
+            <div class="admin-kpi-val" style="color:var(--sky-500);">8</div>
+            <div class="admin-kpi-label">In Progress</div>
+          </div>
+          <div class="admin-kpi">
+            <div class="admin-kpi-val" style="color:var(--teal-500);">189</div>
+            <div class="admin-kpi-label">Resolved</div>
+          </div>
+        </div>
+        <div class="reports-table-wrap">
+          <table class="reports-table">
+            <thead><tr><th>Tracking ID</th><th>Category</th><th>Ward</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="admin-reports-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ──── TAB: LEADERBOARD ──── -->
+    <section class="tab-panel" id="tab-leaderboard">
+      <div class="container" style="padding-top:2rem;">
+        <div class="section-header">
+          <div>
+            <div class="section-tag"><i class="fa-solid fa-trophy"></i> Civic Karma</div>
+            <h2 class="section-title">Top Citizen Contributors</h2>
+            <p class="section-subtitle">Earn points by reporting issues and providing feedback.</p>
+          </div>
+        </div>
+        <div class="lb-list" id="leaderboard-list"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand"><i class="fa-solid fa-city" style="color:var(--teal-500);"></i> Safe & Smart City</div>
+          <p class="footer-desc">A civic technology platform for transparent reporting and resolution of everyday urban problems. B.Sc. Computer Science Mini Project.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Quick Links</div>
+          <div class="footer-links">
+            <a href="#" onclick="switchTab('home');return false;">Home</a>
+            <a href="#" onclick="switchTab('explore');return false;">Explore Issues</a>
+            <a href="#" onclick="switchTab('map');return false;">City Map</a>
+            <a href="#" onclick="switchTab('leaderboard');return false;">Leaderboard</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Project Info</div>
+          <p class="footer-desc">
+            <strong>Stack:</strong> HTML5, CSS3, JavaScript (ES6+), Leaflet.js<br>
+            <strong>Curriculum:</strong> B.Sc. Computer Science, 3rd Year<br>
+            <strong>Features:</strong> Geolocation API, Photo Evidence, Tracking IDs
+          </p>
+        </div>
+      </div>
+      <div class="footer-bottom">&copy; 2026 Safe & Smart City Civic Issue Reporting System. Academic Project.</div>
+    </div>
+  </footer>
+
+  <!-- ═══════ MODALS ═══════ -->
+
+  <!-- Auth Modal -->
+  <div class="modal-overlay" id="modal-auth">
+    <div class="modal-dialog" style="max-width:440px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-lock" style="color:var(--teal-500);"></i> Login / Register</h3>
+        <button class="modal-close" onclick="closeModal('modal-auth')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div id="auth-login-form">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="login-email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="login-pass" placeholder="Enter password">
+          </div>
+          <button class="btn btn-teal" style="width:100%;" onclick="handleLogin()">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In
+          </button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-sub);">
+            Don't have an account? <a href="#" onclick="toggleAuthForm();return false;">Register here</a>
+          </p>
+        </div>
+        <div id="auth-register-form" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" id="reg-name" placeholder="Ankit Kumar">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="reg-email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-input" id="reg-phone" placeholder="98XXXXXXXX">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="reg-pass" placeholder="Min 6 characters">
+          </div>
+          <button class="btn btn-teal" style="width:100%;" onclick="handleRegister()">
+            <i class="fa-solid fa-user-plus"></i> Create Account
+          </button>
+          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-sub);">
+            Already have an account? <a href="#" onclick="toggleAuthForm();return false;">Sign in</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Issue Modal -->
+  <div class="modal-overlay" id="modal-report">
+    <div class="modal-dialog" style="max-width:580px;">
+      <div class="modal-header" style="background:linear-gradient(135deg,var(--teal-500),var(--orange-500));color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-camera-retro"></i> Report a Civic Issue</h3>
+        <button class="modal-close" onclick="closeModal('modal-report')" style="border-color:rgba(255,255,255,0.3);color:#fff;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" id="report-category"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" class="form-input" id="report-title" placeholder="e.g. Deep pothole near Metro Pillar 42">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="report-desc" placeholder="Describe the issue in detail..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ward</label>
+          <select class="form-select" id="report-ward"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-location-dot"></i> Location (GPS Auto-Detect)</label>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+            <button type="button" class="btn btn-outline btn-sm" onclick="detectGPS()"><i class="fa-solid fa-crosshairs"></i> Detect My Location</button>
+            <span style="font-size:0.82rem;color:var(--text-sub);display:flex;align-items:center;gap:0.3rem;" id="gps-status"></span>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" class="form-input" id="report-lat" placeholder="Latitude" readonly style="flex:1;">
+            <input type="text" class="form-input" id="report-lng" placeholder="Longitude" readonly style="flex:1;">
+          </div>
+          <div id="report-map-picker" style="height:200px;border-radius:var(--r-sm);border:1px solid var(--border);margin-top:0.5rem;"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fa-solid fa-image"></i> Photo Evidence (Max 25 MB)</label>
+          <input type="file" class="form-input" id="report-photo" accept="image/*">
+          <div id="photo-preview" style="margin-top:0.5rem;display:none;">
+            <img id="photo-preview-img" style="max-height:150px;border-radius:var(--r-sm);border:1px solid var(--border);">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-report')">Cancel</button>
+        <button class="btn btn-teal" onclick="submitReport()"><i class="fa-solid fa-paper-plane"></i> Submit Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tracking Modal -->
+  <div class="modal-overlay" id="modal-track">
+    <div class="modal-dialog" style="max-width:600px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-magnifying-glass-location" style="color:var(--teal-500);"></i> Issue Tracking</h3>
+        <button class="modal-close" onclick="closeModal('modal-track')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="track-modal-body">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Resolve Modal (Admin) -->
+  <div class="modal-overlay" id="modal-resolve">
+    <div class="modal-dialog" style="max-width:500px;">
+      <div class="modal-header" style="background:var(--teal-500);color:#fff;">
+        <h3 style="color:#fff;"><i class="fa-solid fa-circle-check"></i> Mark as Resolved</h3>
+        <button class="modal-close" onclick="closeModal('modal-resolve')" style="border-color:rgba(255,255,255,0.3);color:#fff;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">After-Photo Proof *</label>
+          <input type="file" class="form-input" id="resolve-photo" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Admin Remarks</label>
+          <textarea class="form-textarea" id="resolve-remarks" placeholder="Work performed details..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('modal-resolve')">Cancel</button>
+        <button class="btn btn-teal" onclick="resolveIssue()"><i class="fa-solid fa-check"></i> Mark Resolved</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
