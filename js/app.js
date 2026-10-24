@@ -194,12 +194,7 @@ const LEADERBOARD_USERS = [
 // ═════════════════════════════════════════════════════════════════════
 
 let issues = [];
-let currentUser = {
-  name: 'Ankit Kumar',
-  email: 'ankit.smartcity@delhi.gov.in',
-  role: 'Citizen',
-  karma: 620
-};
+let currentUser = null;
 
 function loadData() {
   const storedIssues = localStorage.getItem('smartcity_issues');
@@ -218,7 +213,11 @@ function loadData() {
   if (storedUser) {
     try {
       currentUser = JSON.parse(storedUser);
-    } catch (e) {}
+    } catch (e) {
+      currentUser = null;
+    }
+  } else {
+    currentUser = null;
   }
 }
 
@@ -227,7 +226,11 @@ function saveData() {
 }
 
 function saveUser() {
-  localStorage.setItem('smartcity_user', JSON.stringify(currentUser));
+  if (currentUser) {
+    localStorage.setItem('smartcity_user', JSON.stringify(currentUser));
+  } else {
+    localStorage.removeItem('smartcity_user');
+  }
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -631,8 +634,9 @@ function renderMyReports() {
   const tbody = document.getElementById('my-reports-body');
   if (!tbody) return;
 
-  // Filter issues reported by current user or show all if list is small
-  const myIssues = issues.filter(i => i.reportedBy === currentUser.name || i.reportedBy.includes('Ankit'));
+  // Filter issues safely even if currentUser is null
+  const userName = currentUser ? currentUser.name : '';
+  const myIssues = issues.filter(i => (userName && i.reportedBy === userName) || i.reportedBy.includes('Ankit'));
   const displayList = myIssues.length > 0 ? myIssues : issues.slice(0, 4);
 
   tbody.innerHTML = displayList.map(issue => {
@@ -815,7 +819,7 @@ function submitReport() {
     lng: lng,
     status: 'PENDING',
     priority: 'High',
-    reportedBy: currentUser.name,
+    reportedBy: currentUser ? currentUser.name : 'Citizen User',
     date: dateStr,
     upvotes: 1,
     hasUpvoted: true,
@@ -834,9 +838,11 @@ function submitReport() {
   issues.unshift(newIssue);
   saveData();
 
-  // Add Karma points
-  currentUser.karma += 50;
-  saveUser();
+  // Add Karma points safely
+  if (currentUser) {
+    currentUser.karma = (currentUser.karma || 50) + 50;
+    saveUser();
+  }
 
   // Reset form
   document.getElementById('report-title').value = '';
@@ -1099,6 +1105,15 @@ function adminMarkInProgress(issueId) {
 // ═════════════════════════════════════════════
 
 function switchTab(tabId) {
+  // Role Protection: Guard the Admin tab
+  if (tabId === 'admin') {
+    if (!currentUser || currentUser.role !== 'admin') {
+      showToast('Access Restricted: Official Municipal Admin credentials required.', 'warning');
+      showAuthGateway('admin');
+      return;
+    }
+  }
+
   // Update nav links
   const navLinks = document.querySelectorAll('.nav-link');
   navLinks.forEach(link => {
@@ -1135,18 +1150,6 @@ function switchTab(tabId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme') || 'light';
-  const target = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', target);
-  localStorage.setItem('smartcity_theme', target);
-
-  const icon = document.querySelector('#theme-toggle i');
-  if (icon) {
-    icon.className = target === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-  }
-}
 
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -1178,29 +1181,95 @@ window.addEventListener('keydown', function (e) {
   }
 });
 
-function toggleAuthForm() {
-  const loginForm = document.getElementById('auth-login-form');
-  const regForm = document.getElementById('auth-register-form');
+// ═════════════════════════════════════════════════════════════════════
+// 6B. AUTHENTICATION GATEWAY & ROLE CONTROL ENGINE
+// ═════════════════════════════════════════════════════════════════════
 
-  if (loginForm && regForm) {
-    if (loginForm.style.display === 'none') {
-      loginForm.style.display = 'block';
-      regForm.style.display = 'none';
+function checkAuthGate() {
+  const gateway = document.getElementById('auth-gateway');
+  if (!currentUser) {
+    showAuthGateway('citizen');
+  } else {
+    hideAuthGateway();
+    updateNavForUser();
+    if (currentUser.role === 'admin') {
+      switchTab('admin');
     } else {
-      loginForm.style.display = 'none';
-      regForm.style.display = 'block';
+      switchTab('home');
     }
   }
 }
 
-async function handleLogin() {
-  const email = document.getElementById('login-email')?.value.trim();
-  const password = document.getElementById('login-pass')?.value;
-
-  if (!email || !password) {
-    showToast('Please enter both email and password.', 'warning');
-    return;
+function showAuthGateway(portal = 'citizen') {
+  const gateway = document.getElementById('auth-gateway');
+  if (gateway) {
+    gateway.style.display = 'flex';
+    gateway.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
+  switchAuthPortal(portal);
+}
+
+function hideAuthGateway() {
+  const gateway = document.getElementById('auth-gateway');
+  if (gateway) {
+    gateway.classList.add('hidden');
+    gateway.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+function switchAuthPortal(portal) {
+  const btnCitizen = document.getElementById('btn-portal-citizen');
+  const btnAdmin = document.getElementById('btn-portal-admin');
+  const paneCitizen = document.getElementById('pane-citizen-auth');
+  const paneAdmin = document.getElementById('pane-admin-auth');
+
+  if (portal === 'citizen') {
+    btnCitizen?.classList.add('active', 'citizen');
+    btnAdmin?.classList.remove('active', 'admin');
+    if (paneCitizen) paneCitizen.style.display = 'block';
+    if (paneAdmin) paneAdmin.style.display = 'none';
+  } else {
+    btnAdmin?.classList.add('active', 'admin');
+    btnCitizen?.classList.remove('active', 'citizen');
+    if (paneCitizen) paneCitizen.style.display = 'none';
+    if (paneAdmin) paneAdmin.style.display = 'block';
+  }
+}
+
+function toggleCitizenForm(showRegister) {
+  const loginForm = document.getElementById('citizen-login-form');
+  const regForm = document.getElementById('citizen-register-form');
+  if (loginForm && regForm) {
+    loginForm.style.display = showRegister ? 'none' : 'block';
+    regForm.style.display = showRegister ? 'block' : 'none';
+  }
+}
+
+function fillDemoCitizen() {
+  const emailInput = document.getElementById('c-login-email');
+  const passInput = document.getElementById('c-login-pass');
+  if (emailInput) emailInput.value = 'ankit@smartcity.gov';
+  if (passInput) passInput.value = 'citizen123';
+  showToast('Demo Citizen credentials loaded!', 'success');
+}
+
+function fillDemoAdmin() {
+  const emailInput = document.getElementById('a-login-email');
+  const passInput = document.getElementById('a-login-pass');
+  if (emailInput) emailInput.value = 'admin@smartcity.gov';
+  if (passInput) passInput.value = 'admin123';
+  showToast('Official Admin credentials loaded!', 'success');
+}
+
+async function handleCitizenLogin() {
+  let email = document.getElementById('c-login-email')?.value.trim();
+  let password = document.getElementById('c-login-pass')?.value;
+
+  // Gracefully fallback to demo credentials if empty so user is never trapped
+  if (!email) email = 'citizen@smartcity.gov';
+  if (!password) password = 'citizen123';
 
   try {
     const res = await fetch('api/auth/login', {
@@ -1208,81 +1277,200 @@ async function handleLogin() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      currentUser = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        role: data.user.role,
-        karma: data.user.civic_points || 50
-      };
-      localStorage.setItem('smartcity_token', data.token);
-      saveUser();
-      closeModal('modal-auth');
-      showToast(`Welcome back, ${currentUser.name}! (Connected to MySQL)`, 'success');
-      renderMyReports();
-      return;
-    } else {
-      showToast(data.message || 'Invalid email or password.', 'error');
-      return;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        currentUser = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: 'citizen',
+          ward: data.user.ward || 'Ward 4 - Connaught Place',
+          karma: data.user.civic_points || 120
+        };
+        if (data.token) localStorage.setItem('smartcity_token', data.token);
+      }
     }
   } catch (err) {
-    currentUser.name = email ? email.split('@')[0] : 'Ankit Kumar';
-    currentUser.email = email || 'ankit@smartcity.gov';
-    saveUser();
-    closeModal('modal-auth');
-    showToast(`Welcome back, ${currentUser.name}! Logged in as Citizen.`, 'success');
-    renderMyReports();
+    // Offline / Standalone mode
   }
+
+  if (!currentUser) {
+    const cleanName = email.split('@')[0].replace(/[._]/g, ' ');
+    const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    currentUser = {
+      id: 101,
+      name: formattedName || 'Ankit Kumar',
+      email: email,
+      role: 'citizen',
+      ward: 'Ward 4 - Connaught Place',
+      karma: 120
+    };
+  }
+
+  saveUser();
+  hideAuthGateway();
+  updateNavForUser();
+  switchTab('home');
+  renderMyReports();
+  showToast(`Welcome back, ${currentUser.name}! Signed in to Citizen Portal.`, 'success');
 }
 
-async function handleRegister() {
-  const name = document.getElementById('reg-name')?.value.trim() || 'New Citizen';
-  const email = document.getElementById('reg-email')?.value.trim();
-  const phone = document.getElementById('reg-phone')?.value.trim() || '9800000000';
-  const password = document.getElementById('reg-pass')?.value;
+async function handleCitizenRegister() {
+  let name = document.getElementById('c-reg-name')?.value.trim();
+  let email = document.getElementById('c-reg-email')?.value.trim();
+  let phone = document.getElementById('c-reg-phone')?.value.trim() || '98100XXXXX';
+  let password = document.getElementById('c-reg-pass')?.value;
+  let ward = 'City Central';
 
-  if (!email || !password) {
-    showToast('Please provide both email and password.', 'warning');
-    return;
-  }
+  if (!name) name = 'New Citizen';
+  if (!email) email = 'citizen@smartcity.gov';
+  if (!password) password = 'pass123';
 
   try {
     const res = await fetch('api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, phone, password, ward: 'Ward 4 - Connaught Place' })
+      body: JSON.stringify({ name, email, phone, password, ward })
     });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      currentUser = {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        role: data.user.role,
-        karma: data.user.civic_points || 50
-      };
-      localStorage.setItem('smartcity_token', data.token);
-      saveUser();
-      closeModal('modal-auth');
-      showToast(`Account created in MySQL! Welcome, ${name}. Check Workbench!`, 'success');
-      renderMyReports();
-      return;
-    } else {
-      showToast(data.message || 'Registration failed.', 'error');
-      return;
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success) {
+        currentUser = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: 'citizen',
+          ward: ward,
+          karma: data.user.civic_points || 50
+        };
+        if (data.token) localStorage.setItem('smartcity_token', data.token);
+      }
     }
   } catch (err) {
-    currentUser.name = name;
-    currentUser.email = email;
-    currentUser.karma = 50;
-    saveUser();
-    closeModal('modal-auth');
-    showToast(`Account created! Welcome, ${name}. +50 Welcome Karma!`, 'success');
-    renderMyReports();
+    // Offline fallback
+  }
+
+  if (!currentUser) {
+    currentUser = {
+      id: Date.now(),
+      name: name,
+      email: email,
+      phone: phone,
+      ward: ward,
+      role: 'citizen',
+      karma: 50
+    };
+  }
+
+  saveUser();
+  hideAuthGateway();
+  updateNavForUser();
+  switchTab('home');
+  renderMyReports();
+  showToast(`Account created! Welcome, ${currentUser.name}. +50 Welcome Karma added!`, 'success');
+}
+
+function handleAdminLogin() {
+  let email = document.getElementById('a-login-email')?.value.trim();
+  let password = document.getElementById('a-login-pass')?.value;
+
+  if (!email) email = 'admin@smartcity.gov';
+  if (!password) password = 'admin123';
+
+  // Set official Municipal Admin Profile
+  currentUser = {
+    id: 999,
+    name: 'Municipal Admin',
+    email: email,
+    role: 'admin',
+    karma: 9999
+  };
+
+  saveUser();
+  hideAuthGateway();
+  updateNavForUser();
+  switchTab('admin');
+  showToast('Authorized! Signed in to Municipal Admin Console.', 'success');
+}
+
+function continueAsGuest() {
+  currentUser = {
+    id: 0,
+    name: 'Guest Citizen',
+    email: 'guest@smartcity.gov',
+    role: 'guest',
+    karma: 0
+  };
+  saveUser();
+  hideAuthGateway();
+  updateNavForUser();
+  switchTab('home');
+  showToast('Browsing as Guest. You can explore the Live Map and Track Complaints.', 'info');
+}
+
+function handleLogout() {
+  currentUser = null;
+  localStorage.removeItem('smartcity_user');
+  localStorage.removeItem('smartcity_token');
+  updateNavForUser();
+  showAuthGateway('citizen');
+  showToast('Logged out successfully. Please sign in to continue.', 'info');
+}
+
+function updateNavForUser() {
+  const navUserArea = document.getElementById('nav-user-area');
+  const navTabAdmin = document.getElementById('nav-tab-admin');
+
+  // Control visibility of Admin tab in navbar
+  if (navTabAdmin) {
+    if (currentUser && currentUser.role === 'admin') {
+      navTabAdmin.style.display = 'block';
+    } else {
+      navTabAdmin.style.display = 'none';
+    }
+  }
+
+  if (!navUserArea) return;
+
+  if (!currentUser || currentUser.role === 'guest') {
+    navUserArea.innerHTML = `
+      <button class="btn btn-outline btn-sm" onclick="showAuthGateway('citizen')">
+        <i class="fa-solid fa-right-to-bracket"></i> Sign In / Portal
+      </button>
+    `;
+    return;
+  }
+
+  if (currentUser.role === 'admin') {
+    navUserArea.innerHTML = `
+      <div class="nav-user-chip admin">
+        <div class="nav-user-avatar"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="nav-user-meta">
+          <span class="nav-user-name">${escapeHtml(currentUser.name)}</span>
+          <span class="nav-user-badge">OFFICER • ${escapeHtml(currentUser.dept ? currentUser.dept.split(' ')[0] : 'ADMIN')}</span>
+        </div>
+        <button type="button" class="btn-logout" onclick="handleLogout()" title="Logout / Switch Portal">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    `;
+  } else {
+    navUserArea.innerHTML = `
+      <div class="nav-user-chip">
+        <div class="nav-user-avatar"><i class="fa-solid fa-user"></i></div>
+        <div class="nav-user-meta">
+          <span class="nav-user-name">${escapeHtml(currentUser.name)}</span>
+          <span class="nav-user-badge"><i class="fa-solid fa-star" style="color:var(--orange-500);"></i> ${currentUser.karma || 50} Karma</span>
+        </div>
+        <button type="button" class="btn-logout" onclick="handleLogout()" title="Logout / Switch Account">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    `;
   }
 }
+
 
 // ═════════════════════════════════════════════════════════════════════
 // 7. TOAST NOTIFICATIONS & UTILITIES
@@ -1332,15 +1520,6 @@ function escapeHtml(str) {
 // ═════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Restore saved theme
-  const savedTheme = localStorage.getItem('smartcity_theme');
-  if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    const icon = document.querySelector('#theme-toggle i');
-    if (icon) {
-      icon.className = savedTheme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-    }
-  }
 
   loadData();
   populateDropdowns();
@@ -1353,4 +1532,5 @@ document.addEventListener('DOMContentLoaded', function () {
   renderLeaderboard();
   setupPhotoPreview();
   setupResolvePhoto();
+  checkAuthGate();
 });

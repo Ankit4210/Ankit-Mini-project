@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +25,186 @@
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
+  <!-- ═══════ AUTHENTICATION GATEWAY (Modern Compact Modal) ═══════ -->
+  <div class="auth-gateway-overlay" id="auth-gateway">
+    <div class="auth-gateway-ambient"></div>
+    <div class="auth-gateway-card">
+      <!-- Close (X) button -->
+      <button type="button" class="gateway-close-cross" onclick="hideAuthGateway()" title="Close Portal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      
+      <!-- Left: Executive Branding & Civic Highlights -->
+      <div class="gateway-hero">
+        <div class="gateway-hero-top">
+          <div class="gateway-brand">
+            <div class="gateway-brand-icon"><i class="fa-solid fa-city"></i></div>
+            <span>Smart City</span>
+          </div>
+          <h2 class="gateway-hero-title">
+            Civic Issue &<br><span>Triage Portal</span>
+          </h2>
+          <p class="gateway-hero-desc">
+            Direct municipal bridge connecting citizens and field teams for rapid civic grievance resolution.
+          </p>
+        </div>
+
+        <div class="gateway-hero-stats">
+          <div class="hero-stat-item">
+            <div class="stat-num">8.4k+</div>
+            <div class="stat-label">Resolved</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num">98%</div>
+            <div class="stat-label">SLA Met</div>
+          </div>
+          <div class="hero-stat-item">
+            <div class="stat-num">&lt;24h</div>
+            <div class="stat-label">Triage</div>
+          </div>
+        </div>
+
+        <div class="gateway-hero-footer">
+          <span><i class="fa-solid fa-shield-halved" style="color:var(--teal-500);"></i> Municipal Verified</span>
+          <span>B.Sc. Mini Project</span>
+        </div>
+      </div>
+
+      <!-- Right: Role Switcher & Dynamic Forms -->
+      <div class="gateway-form-pane">
+        
+        <!-- Header with Portal Switcher -->
+        <div class="gateway-header-bar">
+          <div class="portal-switch-wrapper">
+            <button type="button" class="portal-switch-btn active citizen" id="btn-portal-citizen" onclick="switchAuthPortal('citizen')">
+              <i class="fa-solid fa-user"></i> Citizen
+            </button>
+            <button type="button" class="portal-switch-btn" id="btn-portal-admin" onclick="switchAuthPortal('admin')">
+              <i class="fa-solid fa-shield-halved"></i> Admin
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Citizen Auth Section ── -->
+        <div id="pane-citizen-auth" class="auth-pane">
+          
+          <!-- Citizen Login Form -->
+          <div id="citizen-login-form">
+            <div class="pane-header-row">
+              <div>
+                <h3 class="pane-title"><i class="fa-solid fa-user" style="color:var(--teal-500);"></i> Citizen Sign In</h3>
+                <p class="pane-subtitle">Report & track neighborhood civic problems</p>
+              </div>
+              <button type="button" class="demo-chip" onclick="fillDemoCitizen()" title="Fill Demo Citizen Credentials">
+                <i class="fa-solid fa-bolt" style="color:var(--orange-500);"></i> Demo
+              </button>
+            </div>
+
+            <div class="form-group compact">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-input" id="c-login-email" placeholder="citizen@smartcity.gov">
+            </div>
+            <div class="form-group compact">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-input" id="c-login-pass" placeholder="••••••••">
+            </div>
+
+            <button class="btn btn-teal btn-submit" onclick="handleCitizenLogin()">
+              <i class="fa-solid fa-right-to-bracket"></i> Sign In as Citizen
+            </button>
+
+            <div class="form-switch-row">
+              <span>New resident?</span>
+              <a href="#" onclick="toggleCitizenForm(true);return false;">Create Account</a>
+            </div>
+          </div>
+
+          <!-- Citizen Register Form -->
+          <div id="citizen-register-form" style="display:none;">
+            <div class="pane-header-row">
+              <div>
+                <h3 class="pane-title"><i class="fa-solid fa-user-plus" style="color:var(--teal-500);"></i> Register</h3>
+                <p class="pane-subtitle">Claim +50 Welcome Karma</p>
+              </div>
+              <a href="#" onclick="toggleCitizenForm(false);return false;" class="back-link">
+                <i class="fa-solid fa-arrow-left"></i> Sign In
+              </a>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group compact">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="c-reg-name" placeholder="Ankit Kumar">
+              </div>
+              <div class="form-group compact">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="c-reg-phone" placeholder="98XXXXXXXX">
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group compact">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="c-reg-email" placeholder="ankit@smartcity.gov">
+              </div>
+              <div class="form-group compact">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-input" id="c-reg-pass" placeholder="Create password">
+              </div>
+            </div>
+
+            <button class="btn btn-teal btn-submit" onclick="handleCitizenRegister()">
+              <i class="fa-solid fa-user-plus"></i> Register Citizen
+            </button>
+          </div>
+
+        </div>
+
+        <!-- ── Municipal Admin Auth Section (NO Department selector) ── -->
+        <div id="pane-admin-auth" class="auth-pane" style="display:none;">
+          
+          <div class="pane-header-row">
+            <div>
+              <h3 class="pane-title" style="color:#d97706;"><i class="fa-solid fa-shield-halved"></i> Admin Portal</h3>
+              <p class="pane-subtitle">Triage console & squad dispatch</p>
+            </div>
+            <button type="button" class="demo-chip admin-chip" onclick="fillDemoAdmin()" title="Fill Demo Admin Credentials">
+              <i class="fa-solid fa-bolt" style="color:#d97706;"></i> Demo
+            </button>
+          </div>
+
+          <div class="form-group compact">
+            <label class="form-label">Admin ID / Email</label>
+            <input type="email" class="form-input" id="a-login-email" placeholder="admin@smartcity.gov">
+          </div>
+
+          <div class="form-group compact">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="a-login-pass" placeholder="••••••••">
+          </div>
+
+          <button class="btn btn-orange btn-submit admin-btn" onclick="handleAdminLogin()">
+            <i class="fa-solid fa-right-to-bracket"></i> Sign In to Admin Console
+          </button>
+
+          <p class="admin-disclaimer">
+            <i class="fa-solid fa-lock"></i> Restricted access for municipal officers & staff.
+          </p>
+        </div>
+
+        <!-- Guest Exploration Row -->
+        <div class="gateway-guest-row">
+          <span>Just checking complaints?</span>
+          <button type="button" class="gateway-guest-btn" onclick="continueAsGuest()">
+            Explore Public Map & Track ID <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
   <!-- ═══════ NAVBAR ═══════ -->
   <nav class="navbar">
     <div class="nav-inner">
@@ -46,7 +226,7 @@
         <li class="nav-link" data-tab="my-reports" onclick="switchTab('my-reports')">
           <i class="fa-solid fa-folder-open"></i> My Reports
         </li>
-        <li class="nav-link" data-tab="admin" onclick="switchTab('admin')">
+        <li class="nav-link" data-tab="admin" id="nav-tab-admin" onclick="switchTab('admin')">
           <i class="fa-solid fa-shield-halved"></i> Admin
         </li>
         <li class="nav-link" data-tab="leaderboard" onclick="switchTab('leaderboard')">
@@ -55,18 +235,17 @@
       </ul>
 
       <div class="nav-actions">
-        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
-          <i class="fa-solid fa-moon"></i>
-        </button>
+
         <button class="btn btn-teal btn-sm" onclick="openModal('modal-report')">
           <i class="fa-solid fa-camera-retro"></i> Report Issue
         </button>
-        <button class="btn btn-outline btn-sm" onclick="openModal('modal-auth')">
-          <i class="fa-solid fa-right-to-bracket"></i> Login
-        </button>
+        <div id="nav-user-area">
+          <!-- Rendered dynamically by updateNavForUser() -->
+        </div>
       </div>
     </div>
   </nav>
+
 
   <!-- ═══════ MAIN CONTENT ═══════ -->
   <main>
@@ -320,58 +499,6 @@
   </footer>
 
   <!-- ═══════ MODALS ═══════ -->
-
-  <!-- Auth Modal -->
-  <div class="modal-overlay" id="modal-auth">
-    <div class="modal-dialog" style="max-width:440px;">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-user-lock" style="color:var(--teal-500);"></i> Login / Register</h3>
-        <button class="modal-close" onclick="closeModal('modal-auth')"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="modal-body">
-        <div id="auth-login-form">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" id="login-email" placeholder="you@example.com">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-input" id="login-pass" placeholder="Enter password">
-          </div>
-          <button class="btn btn-teal" style="width:100%;" onclick="handleLogin()">
-            <i class="fa-solid fa-right-to-bracket"></i> Sign In
-          </button>
-          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-sub);">
-            Don't have an account? <a href="#" onclick="toggleAuthForm();return false;">Register here</a>
-          </p>
-        </div>
-        <div id="auth-register-form" style="display:none;">
-          <div class="form-group">
-            <label class="form-label">Full Name</label>
-            <input type="text" class="form-input" id="reg-name" placeholder="Ankit Kumar">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" class="form-input" id="reg-email" placeholder="you@example.com">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Phone</label>
-            <input type="tel" class="form-input" id="reg-phone" placeholder="98XXXXXXXX">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" class="form-input" id="reg-pass" placeholder="Min 6 characters">
-          </div>
-          <button class="btn btn-teal" style="width:100%;" onclick="handleRegister()">
-            <i class="fa-solid fa-user-plus"></i> Create Account
-          </button>
-          <p style="text-align:center;margin-top:1rem;font-size:0.85rem;color:var(--text-sub);">
-            Already have an account? <a href="#" onclick="toggleAuthForm();return false;">Sign in</a>
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Report Issue Modal -->
   <div class="modal-overlay" id="modal-report">
