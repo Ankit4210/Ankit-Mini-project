@@ -3,7 +3,7 @@
 A full-stack web application designed for transparent reporting, tracking, and resolving everyday urban civic grievances (garbage dumps, potholes, non-functional streetlights, water pipeline bursts, fallen trees, and sanitation hazards).
 
 > **Academic Project:** B.Sc. Computer Science Final Year Project  
-> **Repository:** [https://github.com/Ankit4210/collage-mini-project](https://github.com/Ankit4210/collage-mini-project)
+> **Repository:** [https://github.com/Ankit4210/Ankit_Final_Mini_Project](https://github.com/Ankit4210/Ankit_Final_Mini_Project)
 
 ---
 

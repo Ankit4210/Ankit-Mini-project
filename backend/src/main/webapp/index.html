@@ -29,8 +29,8 @@
   <div class="auth-gateway-overlay" id="auth-gateway">
     <div class="auth-gateway-ambient"></div>
     <div class="auth-gateway-card">
-      <!-- Close (X) button -->
-      <button type="button" class="gateway-close-cross" onclick="hideAuthGateway()" title="Close Portal">
+      <!-- Close (X) button: hidden by default for unauthenticated users to prevent bypassing auth -->
+      <button type="button" class="gateway-close-cross" id="gateway-close-cross" onclick="handleGatewayClose()" title="Close Portal" style="display:none;">
         <i class="fa-solid fa-xmark"></i>
       </button>
       
@@ -102,11 +102,11 @@
 
             <div class="form-group compact">
               <label class="form-label">Email Address</label>
-              <input type="email" class="form-input" id="c-login-email" placeholder="citizen@smartcity.gov">
+              <input type="email" class="form-input" id="c-login-email" placeholder="citizen@smartcity.gov" onkeydown="if(event.key==='Enter') handleCitizenLogin()">
             </div>
             <div class="form-group compact">
               <label class="form-label">Password</label>
-              <input type="password" class="form-input" id="c-login-pass" placeholder="••••••••">
+              <input type="password" class="form-input" id="c-login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleCitizenLogin()">
             </div>
 
             <button class="btn btn-teal btn-submit" onclick="handleCitizenLogin()">
@@ -149,7 +149,7 @@
               </div>
               <div class="form-group compact">
                 <label class="form-label">Password</label>
-                <input type="password" class="form-input" id="c-reg-pass" placeholder="Create password">
+                <input type="password" class="form-input" id="c-reg-pass" placeholder="Create password" onkeydown="if(event.key==='Enter') handleCitizenRegister()">
               </div>
             </div>
 
@@ -175,12 +175,12 @@
 
           <div class="form-group compact">
             <label class="form-label">Admin ID / Email</label>
-            <input type="email" class="form-input" id="a-login-email" placeholder="admin@smartcity.gov">
+            <input type="email" class="form-input" id="a-login-email" placeholder="admin@smartcity.gov" onkeydown="if(event.key==='Enter') handleAdminLogin()">
           </div>
 
           <div class="form-group compact">
             <label class="form-label">Password</label>
-            <input type="password" class="form-input" id="a-login-pass" placeholder="••••••••">
+            <input type="password" class="form-input" id="a-login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleAdminLogin()">
           </div>
 
           <button class="btn btn-orange btn-submit admin-btn" onclick="handleAdminLogin()">

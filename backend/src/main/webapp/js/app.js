@@ -1202,12 +1202,30 @@ function checkAuthGate() {
 
 function showAuthGateway(portal = 'citizen') {
   const gateway = document.getElementById('auth-gateway');
+  const closeCross = document.getElementById('gateway-close-cross');
   if (gateway) {
     gateway.style.display = 'flex';
     gateway.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
   }
+  // Only show the close (X) button if user already has an active signed-in session
+  if (closeCross) {
+    if (currentUser && currentUser.role && currentUser.role !== 'guest') {
+      closeCross.style.display = 'flex';
+    } else {
+      closeCross.style.display = 'none';
+    }
+  }
   switchAuthPortal(portal);
+}
+
+function handleGatewayClose() {
+  // If user is not logged in, closing the portal explicitly switches to Guest mode rather than leaving a broken/old state
+  if (!currentUser || currentUser.role === 'guest') {
+    continueAsGuest();
+  } else {
+    hideAuthGateway();
+  }
 }
 
 function hideAuthGateway() {
@@ -1267,9 +1285,11 @@ async function handleCitizenLogin() {
   let email = document.getElementById('c-login-email')?.value.trim();
   let password = document.getElementById('c-login-pass')?.value;
 
-  // Gracefully fallback to demo credentials if empty so user is never trapped
+  // Gracefully fallback to citizen credentials if empty
   if (!email) email = 'citizen@smartcity.gov';
   if (!password) password = 'citizen123';
+
+  let authenticatedCitizen = null;
 
   try {
     const res = await fetch('api/auth/login', {
@@ -1279,8 +1299,8 @@ async function handleCitizenLogin() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.success) {
-        currentUser = {
+      if (data && data.success && data.user) {
+        authenticatedCitizen = {
           id: data.user.id,
           name: data.user.name,
           email: data.user.email,
@@ -1292,13 +1312,17 @@ async function handleCitizenLogin() {
       }
     }
   } catch (err) {
-    // Offline / Standalone mode
+    // Standalone / Offline mode
   }
 
-  if (!currentUser) {
+  // Standalone reliable fallback
+  if (!authenticatedCitizen) {
     const cleanName = email.split('@')[0].replace(/[._]/g, ' ');
-    const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-    currentUser = {
+    let formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    if (formattedName.toLowerCase() === 'citizen' || formattedName.toLowerCase() === 'ankit') {
+      formattedName = 'Ankit Kumar';
+    }
+    authenticatedCitizen = {
       id: 101,
       name: formattedName || 'Ankit Kumar',
       email: email,
@@ -1308,6 +1332,7 @@ async function handleCitizenLogin() {
     };
   }
 
+  currentUser = authenticatedCitizen;
   saveUser();
   hideAuthGateway();
   updateNavForUser();
@@ -1323,9 +1348,11 @@ async function handleCitizenRegister() {
   let password = document.getElementById('c-reg-pass')?.value;
   let ward = 'City Central';
 
-  if (!name) name = 'New Citizen';
-  if (!email) email = 'citizen@smartcity.gov';
+  if (!name) name = 'Ankit Kumar';
+  if (!email) email = 'ankit@smartcity.gov';
   if (!password) password = 'pass123';
+
+  let registeredCitizen = null;
 
   try {
     const res = await fetch('api/auth/register', {
@@ -1335,8 +1362,8 @@ async function handleCitizenRegister() {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && data.success) {
-        currentUser = {
+      if (data && data.success && data.user) {
+        registeredCitizen = {
           id: data.user.id,
           name: data.user.name,
           email: data.user.email,
@@ -1351,8 +1378,8 @@ async function handleCitizenRegister() {
     // Offline fallback
   }
 
-  if (!currentUser) {
-    currentUser = {
+  if (!registeredCitizen) {
+    registeredCitizen = {
       id: Date.now(),
       name: name,
       email: email,
@@ -1363,6 +1390,7 @@ async function handleCitizenRegister() {
     };
   }
 
+  currentUser = registeredCitizen;
   saveUser();
   hideAuthGateway();
   updateNavForUser();
@@ -1381,7 +1409,7 @@ function handleAdminLogin() {
   // Set official Municipal Admin Profile
   currentUser = {
     id: 999,
-    name: 'Municipal Admin',
+    name: 'Municipal Admin Officer',
     email: email,
     role: 'admin',
     karma: 9999
